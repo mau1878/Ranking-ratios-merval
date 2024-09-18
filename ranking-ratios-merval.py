@@ -106,26 +106,31 @@ if not stock_data.empty:
         # Filter data based on user selection
         filtered_bar_plot_data = bar_plot_data[bar_plot_data['Ticker'].isin(selected_tickers)]
 
-        # Create bar plot figure
+        # Sort filtered data by 'Change (%)' in descending order
+        sorted_bar_plot_data = filtered_bar_plot_data.sort_values(by='Change (%)', ascending=False)
+
+        # Create horizontal bar plot figure
         fig_bar = go.Figure(data=go.Bar(
-            x=filtered_bar_plot_data['Ticker'],
-            y=filtered_bar_plot_data['Change (%)'],
-            text=filtered_bar_plot_data['Change (%)'].apply(lambda x: f"{x:.2f}%"),
+            y=sorted_bar_plot_data['Ticker'],
+            x=sorted_bar_plot_data['Change (%)'],
+            text=sorted_bar_plot_data['Change (%)'].apply(lambda x: f"{x:.2f}%"),
             textposition='auto',
-            marker=dict(color=filtered_bar_plot_data['Change (%)'].apply(lambda x: 'red' if x < 0 else 'green'))
+            marker=dict(color=sorted_bar_plot_data['Change (%)'].apply(lambda x: 'red' if x < 0 else 'green')),
+            orientation='h'
         ))
 
         fig_bar.update_layout(
-            xaxis_title='Tickers',
-            yaxis_title='Change (%)',
+            yaxis_title='Tickers',
+            xaxis_title='Change (%)',
             title="Percentage Change in Ratios",
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white'),
-            xaxis=dict(tickangle=-45)  # Rotate x-axis labels for better visibility
+            xaxis=dict(title='Change (%)', tickformat='%'),
+            yaxis=dict(title='Tickers'),
         )
 
-        # Display bar plot
+        # Display horizontal bar plot
         st.plotly_chart(fig_bar)
     else:
         st.error("No valid data available for the selected date or today.")
