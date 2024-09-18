@@ -113,7 +113,7 @@ if not stock_data.empty:
         fig_bar = go.Figure(data=go.Bar(
             y=sorted_bar_plot_data['Ticker'],
             x=sorted_bar_plot_data['Change (%)'],
-            text=sorted_bar_plot_data['Change (%)'].apply(lambda x: f"{x:.2f}%"),
+            text=sorted_bar_plot_data['Change (%)'],
             textposition='auto',
             marker=dict(color=sorted_bar_plot_data['Change (%)'].apply(lambda x: 'red' if x < 0 else 'green')),
             orientation='h'
