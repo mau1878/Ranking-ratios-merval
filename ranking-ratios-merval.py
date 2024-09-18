@@ -58,8 +58,8 @@ def get_closest_date(stock_data, date):
 # Calculate ratios
 if not stock_data.empty:
     # Get the dates for the selected date and today (or closest available)
-    selected_date = get_closest_date(stock_data, pd.to_datetime(start_date))
-    today_date = get_closest_date(stock_data, pd.to_datetime(datetime.today()))
+    selected_date = get_closest_date(stock_data, start_date)
+    today_date = get_closest_date(stock_data, datetime.today())
 
     if selected_date is not None and today_date is not None:
         st.write(f"Comparing ratios for {selected_date.date()} and {today_date.date()}")
