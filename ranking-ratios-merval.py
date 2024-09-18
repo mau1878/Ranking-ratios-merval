@@ -36,10 +36,11 @@ stock_data = get_stock_data(tickers, start_date)
 
 # Function to get the closest available date for a given date
 def get_closest_date(stock_data, date):
-    if date in stock_data.index:
-        return date
+    available_dates = stock_data.index[stock_data.index <= date]
+    if not available_dates.empty:
+        return available_dates[-1]
     else:
-        return stock_data.index[stock_data.index < date][-1]  # Get the most recent date before the given date
+        return None  # Return None if no valid previous date is found
 
 # Calculate ratios
 if not stock_data.empty:
@@ -47,22 +48,24 @@ if not stock_data.empty:
     selected_date = get_closest_date(stock_data, pd.to_datetime(start_date))
     today_date = get_closest_date(stock_data, pd.to_datetime(datetime.today().strftime('%Y-%m-%d')))
 
-    st.write(f"Comparing ratios for {selected_date.date()} and {today_date.date()}")
-    
-    # Calculate the ratios
-    selected_date_ratios = stock_data.loc[selected_date] / stock_data.loc[selected_date, ticker_selected]
-    today_ratios = stock_data.loc[today_date] / stock_data.loc[today_date, ticker_selected]
-    
-    # Calculate the percentage change in ratios
-    ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios * 100
-    ratio_changes = ratio_changes.drop(ticker_selected)  # Remove the selected ticker from the results
-    
-    # Rank the ratios by change (decreasing)
-    ranked_ratios = ratio_changes.sort_values(ascending=True)
-    
-    # Display the results
-    st.write("### Ranked Changes in Ratios:")
-    st.write(ranked_ratios)
+    if selected_date is not None and today_date is not None:
+        st.write(f"Comparing ratios for {selected_date.date()} and {today_date.date()}")
+        
+        # Calculate the ratios
+        selected_date_ratios = stock_data.loc[selected_date] / stock_data.loc[selected_date, ticker_selected]
+        today_ratios = stock_data.loc[today_date] / stock_data.loc[today_date, ticker_selected]
+        
+        # Calculate the percentage change in ratios
+        ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios * 100
+        ratio_changes = ratio_changes.drop(ticker_selected)  # Remove the selected ticker from the results
+        
+        # Rank the ratios by change (decreasing)
+        ranked_ratios = ratio_changes.sort_values(ascending=True)
+        
+        # Display the results
+        st.write("### Ranked Changes in Ratios:")
+        st.write(ranked_ratios)
+    else:
+        st.error("No valid data available for the selected date or today.")
 else:
     st.error("No data available for the selected date range.")
-
