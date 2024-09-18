@@ -90,14 +90,17 @@ if not stock_data.empty:
         st.write("### Ratio Values and Changes:")
         st.dataframe(ranked_results_df)
         
-        # Create the heatmap
+        # Prepare data for the heatmap
         heatmap_data = pd.DataFrame({
             'Ticker': ratio_changes.index,
             'Change (%)': ratio_changes
-        }).pivot("Ticker", "Change (%)")
+        })
+
+        # Reshape data for heatmap (one column)
+        heatmap_matrix = heatmap_data.set_index('Ticker').T
 
         fig_heatmap = px.imshow(
-            heatmap_data.T,
+            heatmap_matrix,
             color_continuous_scale=px.colors.sequential.Viridis,
             labels={'color': 'Change (%)'},
             title="Heatmap of Ratio Changes"
