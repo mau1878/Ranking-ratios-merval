@@ -1,7 +1,6 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import numpy as np
 import plotly.express as px
 from datetime import datetime, timedelta
 
@@ -72,48 +71,23 @@ if not stock_data.empty:
         selected_date_ratios = stock_data.loc[selected_date] / stock_data.loc[selected_date, ticker_selected]
         today_ratios = stock_data.loc[today_date] / stock_data.loc[today_date, ticker_selected]
         
-        # Calculate the percentage change in ratios
-        ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios * 100
-        ratio_changes = ratio_changes.drop(ticker_selected)  # Remove the selected ticker from the results
-
         # Combine results into a DataFrame
-        results_df = pd.DataFrame({
-            'Ratio Start Date': selected_date_ratios.drop(ticker_selected),
-            'Ratio End Date': today_ratios.drop(ticker_selected),
-            'Change (%)': ratio_changes
-        })
-
-        # Rank the ratios by change (decreasing)
-        ranked_results_df = results_df.sort_values(by='Change (%)', ascending=True)
-        
-        # Display the results
-        st.write("### Ratio Values and Changes:")
-        st.dataframe(ranked_results_df)
-
-        # Normalize ratio values to 100 for plotting
-        normalized_start = 100 * (selected_date_ratios / selected_date_ratios)
-        normalized_end = 100 * (today_ratios / selected_date_ratios)
-
-        # Create a DataFrame for plotting
         plot_df = pd.DataFrame({
-            'Ticker': normalized_start.index,
-            'Start Date Ratio (Normalized)': normalized_start,
-            'End Date Ratio (Normalized)': normalized_end
-        })
+            'Ticker': selected_date_ratios.index,
+            'Start Date Ratio': selected_date_ratios,
+            'End Date Ratio': today_ratios
+        }).drop(columns=[ticker_selected])
 
         # Plotting
-        fig = px.scatter(plot_df, x='Start Date Ratio (Normalized)', y='End Date Ratio (Normalized)',
-                         text='Ticker', title='Normalized Ratio Values for Start and End Dates',
-                         labels={'Start Date Ratio (Normalized)': 'Ratio at Start Date (Normalized to 100)',
-                                 'End Date Ratio (Normalized)': 'Ratio at End Date (Normalized to 100)'},
-                         template='plotly_dark')
-        
-        # Update marker size and layout
-        fig.update_traces(marker=dict(size=12, color='rgba(135, 206, 250, 0.8)', line=dict(width=2, color='DarkSlateGrey')),
-                          selector=dict(mode='markers+text'))
-        fig.update_layout(title=dict(x=0.5),
-                          xaxis_title='Ratio at Start Date (Normalized to 100)',
-                          yaxis_title='Ratio at End Date (Normalized to 100)',
+        fig = px.bar(plot_df, x='Ticker', y=['Start Date Ratio', 'End Date Ratio'],
+                     title='Stock Ratios at Start and End Dates',
+                     labels={'value': 'Ratio Value', 'variable': 'Date'},
+                     template='plotly_dark')
+
+        # Update layout
+        fig.update_layout(xaxis_title='Ticker',
+                          yaxis_title='Ratio Value',
+                          barmode='group',
                           plot_bgcolor='rgba(0,0,0,0)',
                           paper_bgcolor='rgba(0,0,0,0)',
                           font=dict(color='white'))
