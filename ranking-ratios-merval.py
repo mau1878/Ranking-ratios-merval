@@ -36,6 +36,8 @@ stock_data = get_stock_data(tickers, start_date)
 
 # Function to get the closest available date for a given date
 def get_closest_date(stock_data, date):
+    # Ensure that the date is converted to a pandas Timestamp for proper comparison
+    date = pd.to_datetime(date)
     available_dates = stock_data.index[stock_data.index <= date]
     if not available_dates.empty:
         return available_dates[-1]
