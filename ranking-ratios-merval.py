@@ -69,8 +69,8 @@ if not stock_data.empty:
         st.write(f"Comparing ratios for {selected_date.date()} and {today_date.date()}")
 
         # Calculate the ratios
-        selected_date_ratios = stock_data.loc[selected_date] / stock_data.loc[selected_date, ticker_selected]
-        today_ratios = stock_data.loc[today_date] / stock_data.loc[today_date, ticker_selected]
+        selected_date_ratios =  stock_data.loc[selected_date, ticker_selected] / stock_data.loc[selected_date]
+        today_ratios =  stock_data.loc[today_date, ticker_selected] / stock_data.loc[today_date]
         
         # Calculate the percentage change in ratios
         ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios * 100
