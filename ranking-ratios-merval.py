@@ -66,7 +66,7 @@ if not stock_data.empty:
 
     if selected_date is not None and today_date is not None:
         st.write(f"Comparing ratios for {selected_date.date()} and {today_date.date()}")
-        
+
         # Calculate the ratios
         selected_date_ratios = stock_data.loc[selected_date] / stock_data.loc[selected_date, ticker_selected]
         today_ratios = stock_data.loc[today_date] / stock_data.loc[today_date, ticker_selected]
@@ -74,13 +74,20 @@ if not stock_data.empty:
         # Calculate the percentage change in ratios
         ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios * 100
         ratio_changes = ratio_changes.drop(ticker_selected)  # Remove the selected ticker from the results
-        
+
+        # Combine results into a DataFrame
+        results_df = pd.DataFrame({
+            'Ratio Start Date': selected_date_ratios.drop(ticker_selected),
+            'Ratio End Date': today_ratios.drop(ticker_selected),
+            'Change (%)': ratio_changes
+        })
+
         # Rank the ratios by change (decreasing)
-        ranked_ratios = ratio_changes.sort_values(ascending=True)
+        ranked_results_df = results_df.sort_values(by='Change (%)', ascending=True)
         
         # Display the results
-        st.write("### Ranked Changes in Ratios:")
-        st.write(ranked_ratios)
+        st.write("### Ratio Values and Changes:")
+        st.dataframe(ranked_results_df)
     else:
         st.error("No valid data available for the selected date or today.")
 else:
