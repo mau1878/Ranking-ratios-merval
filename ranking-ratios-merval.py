@@ -126,7 +126,10 @@ if not stock_data.empty:
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white'),
-            xaxis=dict(title='Change (%)', tickformat='%'),
+            xaxis=dict(
+                title='Change (%)',
+                tickformat='%'
+            ),
             yaxis=dict(title='Tickers'),
         )
 
