@@ -69,8 +69,8 @@ if not stock_data.empty:
         st.write(f"Comparing ratios for {selected_date.date()} and {today_date.date()}")
 
         # Calculate the ratios
-        selected_date_ratios =  stock_data.loc[selected_date, ticker_selected] / stock_data.loc[selected_date]
-        today_ratios =  stock_data.loc[today_date, ticker_selected] / stock_data.loc[today_date]
+        selected_date_ratios = stock_data.loc[selected_date, ticker_selected] / stock_data.loc[selected_date]
+        today_ratios = stock_data.loc[today_date, ticker_selected] / stock_data.loc[today_date]
         
         # Calculate the percentage change in ratios
         ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios * 100
@@ -97,7 +97,8 @@ if not stock_data.empty:
         })
 
         # Create a matrix for heatmap
-        heatmap_matrix = heatmap_data.pivot(index=None, columns='Ticker', values='Change (%)')
+        heatmap_matrix = pd.DataFrame(heatmap_data['Change (%)'].values.reshape(1, -1), 
+                                      columns=heatmap_data['Ticker'])
 
         # Create heatmap figure
         fig_heatmap = go.Figure(data=go.Heatmap(
