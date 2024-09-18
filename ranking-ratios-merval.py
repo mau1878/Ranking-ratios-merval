@@ -90,51 +90,33 @@ if not stock_data.empty:
         st.write("### Ratio Values and Changes:")
         st.dataframe(ranked_results_df)
         
-        # Prepare data for the heatmap
-        heatmap_data = pd.DataFrame({
+        # Prepare data for the bar plot
+        bar_plot_data = pd.DataFrame({
             'Ticker': ratio_changes.index,
             'Change (%)': ratio_changes
         })
 
-        # Create a matrix for heatmap
-        heatmap_matrix = pd.DataFrame(heatmap_data['Change (%)'].values.reshape(1, -1), 
-                                      columns=heatmap_data['Ticker'])
-
-        # Create heatmap figure
-        fig_heatmap = go.Figure(data=go.Heatmap(
-            z=heatmap_matrix.values,
-            x=heatmap_matrix.columns,
-            y=[0],  # Single row to align labels vertically
-            colorscale='Viridis',
-            colorbar=dict(title='Change (%)'),
-            zmin=heatmap_data['Change (%)'].min(),
-            zmax=heatmap_data['Change (%)'].max()
+        # Create bar plot figure
+        fig_bar = go.Figure(data=go.Bar(
+            x=bar_plot_data['Ticker'],
+            y=bar_plot_data['Change (%)'],
+            text=bar_plot_data['Change (%)'].apply(lambda x: f"{x:.2f}%"),
+            textposition='auto',
+            marker=dict(color=bar_plot_data['Change (%)'].apply(lambda x: 'red' if x < 0 else 'green'))
         ))
 
-        # Add ticker names inside each cell
-        for i, ticker in enumerate(heatmap_data['Ticker']):
-            fig_heatmap.add_trace(go.Scatter(
-                x=[ticker],
-                y=[0],
-                text=[ticker],
-                mode='text',
-                textfont=dict(size=12, color='white'),
-                showlegend=False
-            ))
-
-        fig_heatmap.update_layout(
+        fig_bar.update_layout(
             xaxis_title='Tickers',
-            yaxis_title='',
-            yaxis=dict(showgrid=False, showticklabels=False),
-            xaxis=dict(tickmode='array', tickvals=heatmap_data['Ticker']),
+            yaxis_title='Change (%)',
+            title="Percentage Change in Ratios",
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white'),
-            title="Squared Heatmap of Ratio Changes"
+            xaxis=dict(tickangle=-45)  # Rotate x-axis labels for better visibility
         )
 
-        # Display heatmap
-        st.plotly_chart(fig_heatmap)
+        # Display bar plot
+        st.plotly_chart(fig_bar)
     else:
         st.error("No valid data available for the selected date or today.")
 else:
