@@ -26,18 +26,16 @@ start_date = st.date_input("Seleccionar una fecha de inicio:", value=datetime.to
 # Obtener datos de acciones
 @st.cache_data
 def get_stock_data(tickers, start_date):
-    end_date = datetime.today().strftime('%Y-%m-%d')
-    start_date = start_date.strftime('%Y-%m-%d')
-    stock_data = yf.download(tickers, start=start_date, end=end_date, progress=False)['Adj Close']
+    stock_data = yf.download(tickers, start=start_date)['Adj Close']
     
-    # Asegurarse de que el índice esté en formato de fecha y hora
-    stock_data.index = pd.to_datetime(stock_data.index)
+    # Asegurarse de que las fechas en el índice sean naive (sin zona horaria)
+    stock_data.index = stock_data.index.tz_localize(None)
     
-    # Aplicar ajuste para AGRO.BA: multiplicar el valor del 3 de noviembre de 2023 por 2.1
-    # y dividir los valores hasta el 2 de noviembre de 2023 por 6
+    # Aplicar el ajuste de AGRO.BA el 3 de noviembre de 2023
     if 'AGRO.BA' in stock_data.columns:
-        adjustment_date = pd.Timestamp('2023-11-03')
-        stock_data.loc[adjustment_date, 'AGRO.BA'] *= 2.1
+        adjustment_date = pd.Timestamp('2023-11-03')  # Naive datetime
+        if adjustment_date in stock_data.index:
+            stock_data.loc[adjustment_date, 'AGRO.BA'] *= 2.1
         stock_data.loc[stock_data.index <= '2023-11-02', 'AGRO.BA'] /= 6
     
     return stock_data
