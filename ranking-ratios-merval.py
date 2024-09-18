@@ -123,6 +123,7 @@ if not stock_data.empty:
         ))
 
         fig_bar.update_layout(
+            height=1200,
             yaxis_title='Tickers',
             xaxis_title='Change (Decimal)',
             title="Decimal Change in Ratios",
