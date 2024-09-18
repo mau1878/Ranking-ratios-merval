@@ -43,19 +43,11 @@ def get_closest_date(stock_data, date):
     # Ensure the index is in datetime format
     stock_data.index = pd.to_datetime(stock_data.index)
     
-    # Make sure the date is timezone-aware (same timezone as stock_data.index)
-    if pd.api.types.is_datetime64_any_dtype(stock_data.index):
-        if stock_data.index.tz is not None:
-            date = pd.Timestamp(date).tz_localize('UTC') if pd.Timestamp(date).tzinfo is None else pd.Timestamp(date)
-        else:
-            date = pd.Timestamp(date).tz_localize('UTC')
-    
     # Compare and find the closest available date
     available_dates = stock_data.index[stock_data.index <= date]
     
     if not available_dates.empty:
         return available_dates[-1]
-
     return None # Return None if no valid previous date is found
 
 # Calculate ratios
@@ -76,7 +68,11 @@ if not stock_data.empty:
             'Ticker': selected_date_ratios.index,
             'Start Date Ratio': selected_date_ratios,
             'End Date Ratio': today_ratios
-        }).drop(columns=[ticker_selected])
+        })
+        
+        # Check if the selected ticker is in the DataFrame, and remove it if present
+        if ticker_selected in plot_df['Ticker'].values:
+            plot_df = plot_df[plot_df['Ticker'] != ticker_selected]
 
         # Plotting
         fig = px.bar(plot_df, x='Ticker', y=['Start Date Ratio', 'End Date Ratio'],
