@@ -29,6 +29,10 @@ def get_stock_data(tickers, start_date):
     end_date = datetime.today().strftime('%Y-%m-%d')
     start_date = start_date.strftime('%Y-%m-%d')
     stock_data = yf.download(tickers, start=start_date, end=end_date, progress=False)['Adj Close']
+    
+    # Ensure index is in datetime format
+    stock_data.index = pd.to_datetime(stock_data.index)
+    
     return stock_data
 
 # Download stock data
@@ -38,7 +42,14 @@ stock_data = get_stock_data(tickers, start_date)
 def get_closest_date(stock_data, date):
     # Ensure that the date is converted to a pandas Timestamp for proper comparison
     date = pd.to_datetime(date)
+    
+    # Ensure the index of stock_data is in datetime format (if not already)
+    if not isinstance(stock_data.index, pd.DatetimeIndex):
+        stock_data.index = pd.to_datetime(stock_data.index)
+
+    # Compare and find the closest available date
     available_dates = stock_data.index[stock_data.index <= date]
+    
     if not available_dates.empty:
         return available_dates[-1]
     else:
