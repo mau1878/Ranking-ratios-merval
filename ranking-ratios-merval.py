@@ -33,7 +33,7 @@ def get_stock_data(tickers, start_date):
     
     # Aplicar el ajuste de AGRO.BA el 3 de noviembre de 2023
     if 'AGRO.BA' in stock_data.columns:
-        adjustment_date = pd.Timestamp('2023-11-03')  # Naive datetime
+        adjustment_date = pd.Timestamp('2023-11-03')
         if adjustment_date in stock_data.index:
             stock_data.loc[adjustment_date, 'AGRO.BA'] *= 2.1
         stock_data.loc[stock_data.index <= '2023-11-02', 'AGRO.BA'] /= 6
@@ -47,11 +47,9 @@ stock_data = get_stock_data(tickers, start_date)
 def get_closest_date(stock_data, date):
     stock_data.index = pd.to_datetime(stock_data.index)
     
-    if pd.api.types.is_datetime64_any_dtype(stock_data.index):
-        if stock_data.index.tz is not None:
-            date = pd.Timestamp(date).tz_localize('UTC') if pd.Timestamp(date).tzinfo is None else pd.Timestamp(date)
-        else:
-            date = pd.Timestamp(date).tz_localize('UTC')
+    # Asegurarse de que la fecha proporcionada sea naive (sin zona horaria)
+    if pd.Timestamp(date).tzinfo is not None:
+        date = pd.Timestamp(date).tz_localize(None)
     
     available_dates = stock_data.index[stock_data.index <= date]
     
