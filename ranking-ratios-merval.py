@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import numpy as np
 import plotly.express as px
 from datetime import datetime, timedelta
 
@@ -43,14 +44,22 @@ def get_closest_date(stock_data, date):
     # Ensure the index is in datetime format
     stock_data.index = pd.to_datetime(stock_data.index)
     
+    # Make sure the date is timezone-aware (same timezone as stock_data.index)
+    if pd.api.types.is_datetime64_any_dtype(stock_data.index):
+        if stock_data.index.tz is not None:
+            date = pd.Timestamp(date).tz_localize('UTC') if pd.Timestamp(date).tzinfo is None else pd.Timestamp(date)
+        else:
+            date = pd.Timestamp(date).tz_localize('UTC')
+    
     # Compare and find the closest available date
     available_dates = stock_data.index[stock_data.index <= date]
     
     if not available_dates.empty:
         return available_dates[-1]
+
     return None # Return None if no valid previous date is found
 
-# Calculate ratios
+# Calculate ratios and changes
 if not stock_data.empty:
     # Get the dates for the selected date and today (or closest available)
     selected_date = get_closest_date(stock_data, start_date)
@@ -63,33 +72,47 @@ if not stock_data.empty:
         selected_date_ratios = stock_data.loc[selected_date] / stock_data.loc[selected_date, ticker_selected]
         today_ratios = stock_data.loc[today_date] / stock_data.loc[today_date, ticker_selected]
         
+        # Calculate the percentage change in ratios
+        ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios * 100
+        ratio_changes = ratio_changes.drop(ticker_selected)  # Remove the selected ticker from the results
+
         # Combine results into a DataFrame
-        plot_df = pd.DataFrame({
-            'Ticker': selected_date_ratios.index,
-            'Start Date Ratio': selected_date_ratios,
-            'End Date Ratio': today_ratios
+        results_df = pd.DataFrame({
+            'Ratio Start Date': selected_date_ratios.drop(ticker_selected),
+            'Ratio End Date': today_ratios.drop(ticker_selected),
+            'Change (%)': ratio_changes
         })
+
+        # Rank the ratios by change (decreasing)
+        ranked_results_df = results_df.sort_values(by='Change (%)', ascending=True)
         
-        # Check if the selected ticker is in the DataFrame, and remove it if present
-        if ticker_selected in plot_df['Ticker'].values:
-            plot_df = plot_df[plot_df['Ticker'] != ticker_selected]
+        # Display the results
+        st.write("### Ratio Values and Changes:")
+        st.dataframe(ranked_results_df)
+        
+        # Create the heatmap
+        heatmap_data = pd.DataFrame({
+            'Ticker': ratio_changes.index,
+            'Change (%)': ratio_changes
+        }).pivot("Ticker", "Change (%)")
 
-        # Plotting
-        fig = px.bar(plot_df, x='Ticker', y=['Start Date Ratio', 'End Date Ratio'],
-                     title='Stock Ratios at Start and End Dates',
-                     labels={'value': 'Ratio Value', 'variable': 'Date'},
-                     template='plotly_dark')
+        fig_heatmap = px.imshow(
+            heatmap_data.T,
+            color_continuous_scale=px.colors.sequential.Viridis,
+            labels={'color': 'Change (%)'},
+            title="Heatmap of Ratio Changes"
+        )
 
-        # Update layout
-        fig.update_layout(xaxis_title='Ticker',
-                          yaxis_title='Ratio Value',
-                          barmode='group',
-                          plot_bgcolor='rgba(0,0,0,0)',
-                          paper_bgcolor='rgba(0,0,0,0)',
-                          font=dict(color='white'))
+        fig_heatmap.update_layout(
+            xaxis_title='Tickers',
+            yaxis_title='Change (%)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white')
+        )
 
-        # Display plot
-        st.plotly_chart(fig)
+        # Display heatmap
+        st.plotly_chart(fig_heatmap)
     else:
         st.error("No valid data available for the selected date or today.")
 else:
