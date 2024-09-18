@@ -72,7 +72,7 @@ if not stock_data.empty:
         today_ratios = stock_data.loc[today_date, ticker_selected] / stock_data.loc[today_date]
         
         # Calculate the percentage change in ratios
-        ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios
+        ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios * 100
         ratio_changes = ratio_changes.drop(ticker_selected)  # Remove the selected ticker from the results
 
         # Combine results into a DataFrame
