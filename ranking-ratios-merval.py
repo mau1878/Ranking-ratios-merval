@@ -1,7 +1,6 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
@@ -108,6 +107,10 @@ if not stock_data.empty:
 
         # Sort filtered data by 'Change (%)' in descending order
         sorted_bar_plot_data = filtered_bar_plot_data.sort_values(by='Change (%)', ascending=False)
+
+        # Debug: Print the sorted data
+        st.write("### Sorted Bar Plot Data:")
+        st.write(sorted_bar_plot_data)
 
         # Create horizontal bar plot figure
         fig_bar = go.Figure(data=go.Bar(
