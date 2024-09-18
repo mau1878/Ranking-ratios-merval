@@ -72,18 +72,18 @@ if not stock_data.empty:
         today_ratios = stock_data.loc[today_date, ticker_selected] / stock_data.loc[today_date]
         
         # Calculate the percentage change in ratios
-        ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios * 100
+        ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios
         ratio_changes = ratio_changes.drop(ticker_selected)  # Remove the selected ticker from the results
 
         # Combine results into a DataFrame
         results_df = pd.DataFrame({
             'Ratio Start Date': selected_date_ratios.drop(ticker_selected),
             'Ratio End Date': today_ratios.drop(ticker_selected),
-            'Change (%)': ratio_changes
+            'Change (Decimal)': ratio_changes
         })
 
         # Rank the ratios by change (decreasing)
-        ranked_results_df = results_df.sort_values(by='Change (%)', ascending=False)
+        ranked_results_df = results_df.sort_values(by='Change (Decimal)', ascending=False)
         
         # Display the results
         st.write("### Ratio Values and Changes:")
@@ -92,7 +92,7 @@ if not stock_data.empty:
         # Prepare data for the bar plot
         bar_plot_data = pd.DataFrame({
             'Ticker': ratio_changes.index,
-            'Change (%)': ratio_changes
+            'Change (Decimal)': ratio_changes
         })
 
         # Allow user to select which bars to display
@@ -105,8 +105,8 @@ if not stock_data.empty:
         # Filter data based on user selection
         filtered_bar_plot_data = bar_plot_data[bar_plot_data['Ticker'].isin(selected_tickers)]
 
-        # Sort filtered data by 'Change (%)' in descending order
-        sorted_bar_plot_data = filtered_bar_plot_data.sort_values(by='Change (%)', ascending=False)
+        # Sort filtered data by 'Change (Decimal)' in descending order
+        sorted_bar_plot_data = filtered_bar_plot_data.sort_values(by='Change (Decimal)', ascending=False)
 
         # Debug: Print the sorted data
         st.write("### Sorted Bar Plot Data:")
@@ -115,23 +115,22 @@ if not stock_data.empty:
         # Create horizontal bar plot figure
         fig_bar = go.Figure(data=go.Bar(
             y=sorted_bar_plot_data['Ticker'],
-            x=sorted_bar_plot_data['Change (%)'],
-            text=sorted_bar_plot_data['Change (%)'].apply(lambda x: f"{x:.2f}%"),
+            x=sorted_bar_plot_data['Change (Decimal)'],
+            text=sorted_bar_plot_data['Change (Decimal)'].apply(lambda x: f"{x:.2f}"),
             textposition='auto',
-            marker=dict(color=sorted_bar_plot_data['Change (%)'].apply(lambda x: 'red' if x < 0 else 'green')),
+            marker=dict(color=sorted_bar_plot_data['Change (Decimal)'].apply(lambda x: 'red' if x < 0 else 'green')),
             orientation='h'
         ))
 
         fig_bar.update_layout(
             yaxis_title='Tickers',
-            xaxis_title='Change (%)',
-            title="Percentage Change in Ratios",
+            xaxis_title='Change (Decimal)',
+            title="Decimal Change in Ratios",
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white'),
             xaxis=dict(
-                title='Change (%)',
-                tickformat='%'
+                title='Change (Decimal)'
             ),
             yaxis=dict(title='Tickers'),
         )
