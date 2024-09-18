@@ -16,44 +16,69 @@ tickers = ["GGAL.BA", "YPFD.BA", "PAMP.BA", "TXAR.BA", "ALUA.BA", "CRES.BA", "SU
            "FIPL.BA", "GRIM.BA", "DYCA.BA", "POLL.BA", "DOME.BA", "ROSE.BA", "MTR.BA"]
 
 # Aplicación de Streamlit
-st.title("Comparación de Ratios de Acciones")
+# Streamlit app
+st.title("Stock Ratio Comparison")
 
-# Entrada del usuario: ticker y fecha de inicio
-ticker_selected = st.selectbox("Seleccionar un ticker:", tickers)
-start_date = st.date_input("Seleccionar una fecha de inicio:", value=datetime.today() - timedelta(days=365), 
+# User input: ticker and start date
+ticker_selected = st.selectbox("Selecciona un ticker:", tickers)
+start_date = st.date_input("Selecciona una fecha de inicio:", value=datetime.today() - timedelta(days=365), 
                            min_value=datetime(2010, 1, 1), max_value=datetime.today())
 
-# Obtener datos de acciones
+# Fetch stock data
 @st.cache_data
 def get_stock_data(tickers, start_date):
     end_date = datetime.today().strftime('%Y-%m-%d')
     start_date = start_date.strftime('%Y-%m-%d')
     stock_data = yf.download(tickers, start=start_date, end=end_date, progress=False)['Adj Close']
     
-    # Asegurarse de que el índice esté en formato de fecha y hora
+    # Ensure index is in datetime format
     stock_data.index = pd.to_datetime(stock_data.index)
     
     return stock_data
 
-# Descargar datos de acciones
+# Adjust AGRO.BA prices for specific dates
+def adjust_agro_ba_prices(stock_data):
+    agro_ba_ticker = 'AGRO.BA'
+    adjust_date = pd.Timestamp('2023-11-03')
+    
+    if agro_ba_ticker in stock_data.columns:
+        # Multiply the value on November 3, 2023, by 2.1
+        if adjust_date in stock_data.index:
+            stock_data.loc[adjust_date, agro_ba_ticker] *= 2.1
+        
+        # Divide all values on or before November 2, 2023, by 6
+        stock_data.loc[stock_data.index <= adjust_date - timedelta(days=1), agro_ba_ticker] /= 6
+    
+    return stock_data
+
+# Download stock data
 stock_data = get_stock_data(tickers, start_date)
 
-# Función para obtener la fecha disponible más cercana
+# Apply the adjustments to AGRO.BA stock data
+stock_data = adjust_agro_ba_prices(stock_data)
+
+# Function to get the closest available date for a given date
 def get_closest_date(stock_data, date):
+    # Ensure the index is in datetime format
     stock_data.index = pd.to_datetime(stock_data.index)
     
+    # Make sure the date is timezone-aware (same timezone as stock_data.index)
     if pd.api.types.is_datetime64_any_dtype(stock_data.index):
         if stock_data.index.tz is not None:
             date = pd.Timestamp(date).tz_localize('UTC') if pd.Timestamp(date).tzinfo is None else pd.Timestamp(date)
         else:
             date = pd.Timestamp(date).tz_localize('UTC')
     
+    # Compare and find the closest available date
     available_dates = stock_data.index[stock_data.index <= date]
     
     if not available_dates.empty:
         return available_dates[-1]
 
-    return None
+    return None # Return None if no valid previous date is found
+
+# Continue with the rest of your logic...
+
 
 # Calcular ratios y cambios
 if not stock_data.empty:
