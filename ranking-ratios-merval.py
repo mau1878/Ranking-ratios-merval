@@ -84,7 +84,7 @@ if not stock_data.empty:
         })
 
         # Rank the ratios by change (decreasing)
-        ranked_results_df = results_df.sort_values(by='Change (%)', ascending=True)
+        ranked_results_df = results_df.sort_values(by='Change (%)', ascending=False)
         
         # Display the results
         st.write("### Ratio Values and Changes:")
@@ -96,13 +96,23 @@ if not stock_data.empty:
             'Change (%)': ratio_changes
         })
 
+        # Allow user to select which bars to display
+        selected_tickers = st.multiselect(
+            "Select tickers to display:",
+            options=bar_plot_data['Ticker'],
+            default=bar_plot_data['Ticker']
+        )
+        
+        # Filter data based on user selection
+        filtered_bar_plot_data = bar_plot_data[bar_plot_data['Ticker'].isin(selected_tickers)]
+
         # Create bar plot figure
         fig_bar = go.Figure(data=go.Bar(
-            x=bar_plot_data['Ticker'],
-            y=bar_plot_data['Change (%)'],
-            text=bar_plot_data['Change (%)'].apply(lambda x: f"{x:.2f}%"),
+            x=filtered_bar_plot_data['Ticker'],
+            y=filtered_bar_plot_data['Change (%)'],
+            text=filtered_bar_plot_data['Change (%)'].apply(lambda x: f"{x:.2f}%"),
             textposition='auto',
-            marker=dict(color=bar_plot_data['Change (%)'].apply(lambda x: 'red' if x < 0 else 'green'))
+            marker=dict(color=filtered_bar_plot_data['Change (%)'].apply(lambda x: 'red' if x < 0 else 'green'))
         ))
 
         fig_bar.update_layout(
