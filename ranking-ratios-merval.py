@@ -2,7 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as np
-import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
 # List of tickers
@@ -96,22 +96,40 @@ if not stock_data.empty:
             'Change (%)': ratio_changes
         })
 
-        # Reshape data for heatmap (one column)
-        heatmap_matrix = heatmap_data.set_index('Ticker').T
+        # Create a matrix for heatmap
+        heatmap_matrix = heatmap_data.pivot(index=None, columns='Ticker', values='Change (%)')
 
-        fig_heatmap = px.imshow(
-            heatmap_matrix,
-            color_continuous_scale=px.colors.sequential.Viridis,
-            labels={'color': 'Change (%)'},
-            title="Heatmap of Ratio Changes"
-        )
+        # Create heatmap figure
+        fig_heatmap = go.Figure(data=go.Heatmap(
+            z=heatmap_matrix.values,
+            x=heatmap_matrix.columns,
+            y=[0],  # Single row to align labels vertically
+            colorscale='Viridis',
+            colorbar=dict(title='Change (%)'),
+            zmin=heatmap_data['Change (%)'].min(),
+            zmax=heatmap_data['Change (%)'].max()
+        ))
+
+        # Add ticker names inside each cell
+        for i, ticker in enumerate(heatmap_data['Ticker']):
+            fig_heatmap.add_trace(go.Scatter(
+                x=[ticker],
+                y=[0],
+                text=[ticker],
+                mode='text',
+                textfont=dict(size=12, color='white'),
+                showlegend=False
+            ))
 
         fig_heatmap.update_layout(
             xaxis_title='Tickers',
-            yaxis_title='Change (%)',
+            yaxis_title='',
+            yaxis=dict(showgrid=False, showticklabels=False),
+            xaxis=dict(tickmode='array', tickvals=heatmap_data['Ticker']),
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white')
+            font=dict(color='white'),
+            title="Squared Heatmap of Ratio Changes"
         )
 
         # Display heatmap
