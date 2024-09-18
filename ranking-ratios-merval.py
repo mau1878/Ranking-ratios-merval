@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as np
+import plotly.express as px
 from datetime import datetime, timedelta
 
 # List of tickers
@@ -88,6 +89,37 @@ if not stock_data.empty:
         # Display the results
         st.write("### Ratio Values and Changes:")
         st.dataframe(ranked_results_df)
+
+        # Normalize ratio values to 100 for plotting
+        normalized_start = 100 * (selected_date_ratios / selected_date_ratios)
+        normalized_end = 100 * (today_ratios / selected_date_ratios)
+
+        # Create a DataFrame for plotting
+        plot_df = pd.DataFrame({
+            'Ticker': normalized_start.index,
+            'Start Date Ratio (Normalized)': normalized_start,
+            'End Date Ratio (Normalized)': normalized_end
+        })
+
+        # Plotting
+        fig = px.scatter(plot_df, x='Start Date Ratio (Normalized)', y='End Date Ratio (Normalized)',
+                         text='Ticker', title='Normalized Ratio Values for Start and End Dates',
+                         labels={'Start Date Ratio (Normalized)': 'Ratio at Start Date (Normalized to 100)',
+                                 'End Date Ratio (Normalized)': 'Ratio at End Date (Normalized to 100)'},
+                         template='plotly_dark')
+        
+        # Update marker size and layout
+        fig.update_traces(marker=dict(size=12, color='rgba(135, 206, 250, 0.8)', line=dict(width=2, color='DarkSlateGrey')),
+                          selector=dict(mode='markers+text'))
+        fig.update_layout(title=dict(x=0.5),
+                          xaxis_title='Ratio at Start Date (Normalized to 100)',
+                          yaxis_title='Ratio at End Date (Normalized to 100)',
+                          plot_bgcolor='rgba(0,0,0,0)',
+                          paper_bgcolor='rgba(0,0,0,0)',
+                          font=dict(color='white'))
+
+        # Display plot
+        st.plotly_chart(fig)
     else:
         st.error("No valid data available for the selected date or today.")
 else:
