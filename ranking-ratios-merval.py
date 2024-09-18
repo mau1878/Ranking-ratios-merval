@@ -40,10 +40,10 @@ stock_data = get_stock_data(tickers, start_date)
 
 # Function to get the closest available date for a given date
 def get_closest_date(stock_data, date):
-    # Ensure that the date is converted to a pandas Timestamp for proper comparison
+    # Ensure the date is in correct format
     date = pd.to_datetime(date)
     
-    # Ensure the index of stock_data is in datetime format (if not already)
+    # Ensure stock_data's index is a datetime index
     if not isinstance(stock_data.index, pd.DatetimeIndex):
         stock_data.index = pd.to_datetime(stock_data.index)
 
@@ -59,7 +59,7 @@ def get_closest_date(stock_data, date):
 if not stock_data.empty:
     # Get the dates for the selected date and today (or closest available)
     selected_date = get_closest_date(stock_data, pd.to_datetime(start_date))
-    today_date = get_closest_date(stock_data, pd.to_datetime(datetime.today().strftime('%Y-%m-%d')))
+    today_date = get_closest_date(stock_data, pd.to_datetime(datetime.today()))
 
     if selected_date is not None and today_date is not None:
         st.write(f"Comparing ratios for {selected_date.date()} and {today_date.date()}")
