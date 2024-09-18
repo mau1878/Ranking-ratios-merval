@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
-# List of tickers
+# Lista de tickers
 tickers = ["GGAL.BA", "YPFD.BA", "PAMP.BA", "TXAR.BA", "ALUA.BA", "CRES.BA", "SUPV.BA", 
            "CEPU.BA", "BMA.BA", "TGSU2.BA", "TRAN.BA", "EDN.BA", "LOMA.BA", "MIRG.BA", 
            "DGCU2.BA", "BBAR.BA", "MOLI.BA", "TGNO4.BA", "CGPA2.BA", "COME.BA", "IRSA.BA", 
@@ -15,130 +15,116 @@ tickers = ["GGAL.BA", "YPFD.BA", "PAMP.BA", "TXAR.BA", "ALUA.BA", "CRES.BA", "SU
            "GAMI.BA", "PATA.BA", "CARC.BA", "BPAT.BA", "RICH.BA", "INTR.BA", "GARO.BA", 
            "FIPL.BA", "GRIM.BA", "DYCA.BA", "POLL.BA", "DOME.BA", "ROSE.BA", "MTR.BA"]
 
-# Streamlit app
-st.title("Stock Ratio Comparison")
+# Aplicación Streamlit
+st.title("Comparación de Ratios de Acciones")
 
-# User input: ticker and start date
-ticker_selected = st.selectbox("Select a ticker:", tickers)
-start_date = st.date_input("Select a start date:", value=datetime.today() - timedelta(days=365), 
+# Explicación simple de la aplicación
+st.write("Esta aplicación te permite comparar los ratios de diferentes acciones en dos fechas distintas, mostrando los cambios porcentuales entre ellas.")
+
+# Entrada del usuario: ticker y fecha de inicio
+ticker_selected = st.selectbox("Selecciona un ticker:", tickers)
+start_date = st.date_input("Selecciona una fecha de inicio:", value=datetime.today() - timedelta(days=365), 
                            min_value=datetime(2010, 1, 1), max_value=datetime.today())
 
-# Fetch stock data
+# Obtener datos de acciones
 @st.cache_data
 def get_stock_data(tickers, start_date):
     end_date = datetime.today().strftime('%Y-%m-%d')
     start_date = start_date.strftime('%Y-%m-%d')
     stock_data = yf.download(tickers, start=start_date, end=end_date, progress=False)['Adj Close']
     
-    # Ensure index is in datetime format
+    # Asegurar que el índice esté en formato datetime
     stock_data.index = pd.to_datetime(stock_data.index)
     
     return stock_data
 
-# Download stock data
+# Descargar datos de acciones
 stock_data = get_stock_data(tickers, start_date)
 
-# Function to get the closest available date for a given date
+# Función para obtener la fecha más cercana disponible
 def get_closest_date(stock_data, date):
-    # Ensure the index is in datetime format
     stock_data.index = pd.to_datetime(stock_data.index)
-    
-    # Make sure the date is timezone-aware (same timezone as stock_data.index)
-    if pd.api.types.is_datetime64_any_dtype(stock_data.index):
-        if stock_data.index.tz is not None:
-            date = pd.Timestamp(date).tz_localize('UTC') if pd.Timestamp(date).tzinfo is None else pd.Timestamp(date)
-        else:
-            date = pd.Timestamp(date).tz_localize('UTC')
-    
-    # Compare and find the closest available date
     available_dates = stock_data.index[stock_data.index <= date]
     
     if not available_dates.empty:
         return available_dates[-1]
+    
+    return None
 
-    return None # Return None if no valid previous date is found
-
-# Calculate ratios and changes
+# Calcular ratios y cambios
 if not stock_data.empty:
-    # Get the dates for the selected date and today (or closest available)
     selected_date = get_closest_date(stock_data, start_date)
     today_date = get_closest_date(stock_data, datetime.today())
 
     if selected_date is not None and today_date is not None:
-        st.write(f"Comparing ratios for {selected_date.date()} and {today_date.date()}")
+        st.write(f"Comparando ratios para {selected_date.date()} y {today_date.date()}")
 
-        # Calculate the ratios
+        # Calcular los ratios
         selected_date_ratios = stock_data.loc[selected_date, ticker_selected] / stock_data.loc[selected_date]
         today_ratios = stock_data.loc[today_date, ticker_selected] / stock_data.loc[today_date]
         
-        # Calculate the percentage change in ratios
+        # Calcular el cambio porcentual en los ratios
         ratio_changes = (today_ratios - selected_date_ratios) / selected_date_ratios * 100
-        ratio_changes = ratio_changes.drop(ticker_selected)  # Remove the selected ticker from the results
+        ratio_changes = ratio_changes.drop(ticker_selected)
 
-        # Combine results into a DataFrame
+        # Combinar resultados en un DataFrame
         results_df = pd.DataFrame({
-            'Ratio Start Date': selected_date_ratios.drop(ticker_selected),
-            'Ratio End Date': today_ratios.drop(ticker_selected),
-            'Change (Decimal)': ratio_changes
+            'Ratio Fecha Inicio': selected_date_ratios.drop(ticker_selected),
+            'Ratio Fecha Final': today_ratios.drop(ticker_selected),
+            'Cambio (%)': ratio_changes
         })
 
-        # Rank the ratios by change (decreasing)
-        ranked_results_df = results_df.sort_values(by='Change (Decimal)', ascending=False)
+        # Ordenar los ratios por el cambio porcentual
+        ranked_results_df = results_df.sort_values(by='Cambio (%)', ascending=False)
         
-        # Display the results
-        st.write("### Ratio Values and Changes:")
+        # Mostrar los resultados
+        st.write("### Valores y Cambios de Ratios:")
         st.dataframe(ranked_results_df)
         
-        # Prepare data for the bar plot
+        # Preparar los datos para el gráfico de barras
         bar_plot_data = pd.DataFrame({
             'Ticker': ratio_changes.index,
-            'Change (Decimal)': ratio_changes
+            'Cambio (%)': ratio_changes
         })
 
-        # Allow user to select which bars to display
+        # Permitir al usuario seleccionar qué barras mostrar
         selected_tickers = st.multiselect(
-            "Select tickers to display:",
+            "Selecciona los tickers para mostrar:",
             options=bar_plot_data['Ticker'],
             default=bar_plot_data['Ticker']
         )
         
-        # Filter data based on user selection
+        # Filtrar datos en base a la selección del usuario
         filtered_bar_plot_data = bar_plot_data[bar_plot_data['Ticker'].isin(selected_tickers)]
 
-        # Sort filtered data by 'Change (Decimal)' in descending order
-        sorted_bar_plot_data = filtered_bar_plot_data.sort_values(by='Change (Decimal)', ascending=False)
+        # Ordenar los datos filtrados
+        sorted_bar_plot_data = filtered_bar_plot_data.sort_values(by='Cambio (%)', ascending=False)
 
-        # Debug: Print the sorted data
-        st.write("### Sorted Bar Plot Data:")
-        st.write(sorted_bar_plot_data)
-
-        # Create horizontal bar plot figure
+        # Crear gráfico de barras horizontal
         fig_bar = go.Figure(data=go.Bar(
             y=sorted_bar_plot_data['Ticker'],
-            x=sorted_bar_plot_data['Change (Decimal)'],
-            text=sorted_bar_plot_data['Change (Decimal)'].apply(lambda x: f"{x:.2f}"),
+            x=sorted_bar_plot_data['Cambio (%)'],
+            text=sorted_bar_plot_data['Cambio (%)'].apply(lambda x: f"{x:.2f}%"),
             textposition='auto',
-            marker=dict(color=sorted_bar_plot_data['Change (Decimal)'].apply(lambda x: 'red' if x < 0 else 'green')),
+            marker=dict(color=sorted_bar_plot_data['Cambio (%)'].apply(lambda x: 'red' if x < 0 else 'green')),
             orientation='h'
         ))
 
         fig_bar.update_layout(
             height=1200,
             yaxis_title='Tickers',
-            xaxis_title='Change (Decimal)',
-            title="Decimal Change in Ratios",
+            xaxis_title='Cambio (%)',
+            title="Cambio Porcentual en los Ratios",
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white'),
-            xaxis=dict(
-                title='Change (Decimal)'
-            ),
+            xaxis=dict(title='Cambio (%)'),
             yaxis=dict(title='Tickers'),
         )
 
-        # Display horizontal bar plot
+        # Mostrar gráfico de barras
         st.plotly_chart(fig_bar)
     else:
-        st.error("No valid data available for the selected date or today.")
+        st.error("No hay datos válidos disponibles para la fecha seleccionada o para hoy.")
 else:
-    st.error("No data available for the selected date range.")
+    st.error("No hay datos disponibles para el rango de fechas seleccionado.")
